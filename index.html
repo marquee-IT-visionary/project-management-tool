@@ -11,6 +11,7 @@
 body{margin:0;background:var(--bg);color:var(--text);font:400 15px/1.5 'Public Sans','Segoe UI',Arial,sans-serif}
 h1,h2,h3{color:var(--navy);margin:0;line-height:1.25}h1{font-size:28px}h2{font-size:19px}h3{font-size:16px}
 a{color:var(--link)}
+.ctoggle{padding:8px 16px;border-bottom:1px solid var(--line)}
 .chart{padding:12px 16px 8px;border-bottom:1px solid var(--line)}
 .chead,.cbody{position:relative;margin-left:90px}
 .chead{height:22px;border-bottom:1px solid var(--line)}
@@ -251,6 +252,7 @@ function overPeriods(allocs){
   }
   return out;
 }
+const chartOpen=new Set();
 const PAL=['#146CFD','#00A6D5','#8A4FFF','#E8730C','#00663A','#C2185B','#7A4E00','#0F6F73','#5A32D6','#A8102B'];
 const pcol=id=>PAL[(Number(id)||0)%PAL.length];
 function segments(allocs){
@@ -293,7 +295,8 @@ function resourcesView(){
     const isOver=a=>over.some(o=>a.start<=o.to&&a.end>=o.from);
     return `<section class="card"><div class="rhead"><h2>${esc(r.name)}</h2><span class="meta">${esc(r.role)}</span><span class="meta">Domain: ${esc(r.domain)}</span><span class="meta">Category: <span class="ro" title="Read only">${esc(r.category)}</span></span><span class="tot ${cur>100?'over':''}">Current allocation today: ${cur}%</span></div>
     ${over.length?`<div class="note">Over-allocated: ${over.map(o=>`${dmy(o.from)} – ${dmy(o.to)} (${o.sum}%)`).join('; ')}</div>`:''}
-    ${chart(al)}
+    <div class="ctoggle"><button class="lnk" data-chart="${r.id}" aria-expanded="${chartOpen.has(r.id)}">${chartOpen.has(r.id)?'▼ Hide':'▶ Show'} allocation chart</button></div>
+    ${chartOpen.has(r.id)?chart(al):''}
     <div class="tw"><table><thead><tr><th>Project Title</th><th>Project Phase</th><th>Allocation Start Date</th><th>Allocation End Date</th><th class="num">Current Allocation</th><th></th></tr></thead><tbody>
     ${al.map(a=>`<tr class="${isOver(a)?'over':''}"><td><select data-al="${a.id}" data-k="project">${projOpts(a.project)}</select></td><td><select data-al="${a.id}" data-k="phase">${PHASES.map(p=>`<option ${p==a.phase?'selected':''}>${p}</option>`).join('')}</select></td><td><input type="date" data-al="${a.id}" data-k="start" value="${a.start}"></td><td><input type="date" data-al="${a.id}" data-k="end" value="${a.end}"></td><td class="num"><input type="number" min="0" max="200" data-al="${a.id}" data-k="pct" value="${a.pct}"> %</td><td><button class="lnk" data-delal="${a.id}">Remove</button></td></tr>`).join('')||'<tr><td colspan="6" class="muted">No allocations</td></tr>'}</tbody></table></div>
     <div class="savebar" style="${dirty?'':'background:none'}"><button class="btn sm ghost" data-addrow="${r.id}">+ Add project</button>${dirty?`<span style="margin-left:auto"><b>Unsaved changes</b></span><button class="btn sm ghost" data-cancelres="${r.id}">Cancel</button><button class="btn sm" data-saveres="${r.id}">Save</button>`:''}</div></section>`}).join('')||'<p class="muted">No resources in this domain.</p>');
@@ -302,6 +305,7 @@ function resourcesView(){
 document.addEventListener('click',e=>{
   const t=e.target.closest('button,tr.row,a[data-nav]');if(!t)return;
   if(t.tagName==='A')e.preventDefault();
+  if(t.dataset.chart){const id=+t.dataset.chart;chartOpen.has(id)?chartOpen.delete(id):chartOpen.add(id);render();return}
   if(t.dataset.addrow){D().push({id:db.nextId.a++,res:+t.dataset.addrow,project:'',phase:'ANALYSE',start:TODAY,end:TODAY,pct:0});render();return}
   if(t.dataset.cancelres){const id=+t.dataset.cancelres;draft=D().filter(a=>a.res!==id).concat(JSON.parse(JSON.stringify(db.allocations.filter(a=>a.res===id))));render();return}
   if(t.dataset.saveres){const id=+t.dataset.saveres,rn=db.resources.find(r=>r.id===id).name;
