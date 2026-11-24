@@ -11,6 +11,7 @@
 body{margin:0;background:var(--bg);color:var(--text);font:400 15px/1.5 'Public Sans','Segoe UI',Arial,sans-serif}
 h1,h2,h3{color:var(--navy);margin:0;line-height:1.25}h1{font-size:28px}h2{font-size:19px}h3{font-size:16px}
 a{color:var(--link)}
+.srow{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}.srow select,.srow input{width:auto;min-width:170px}.srow input{flex:1;min-width:200px}
 .ctoggle{padding:8px 16px;border-bottom:1px solid var(--line)}
 .chart{padding:12px 16px 8px;border-bottom:1px solid var(--line)}
 .chead,.cbody{position:relative;margin-left:90px}
@@ -152,6 +153,8 @@ function seed(){
   return {projects,resources,allocations,risks,ms,audit,nextId:{p:11,a:aid,r:risks.length+1,m:mid,aud:2}};
 }
 let db=JSON.parse(localStorage.getItem(STORE)||'null')||seed();
+const DEFDOM=['Technology Solutions','Technology Delivery','Platform','Safety Asset','Technology Solutions','Regulatory','Platform','Technology Delivery','Platform','Regulatory'];
+db.projects.forEach((p,i)=>{if(!p.domain)p.domain=DEFDOM[i%DEFDOM.length]});
 const save=()=>localStorage.setItem(STORE,JSON.stringify(db));
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -180,14 +183,46 @@ function render(){
 
 function plist(title,items){
   return `<section class="card"><header><h2>${title}</h2><span class="count" title="Number of projects">${items.length}</span></header><div class="tw"><table>
-  <thead><tr><th>Project Title</th><th>PM</th><th>Funding Source</th><th>Sponsor Name</th><th class="num">Budget</th><th class="num">Current Actuals</th><th>Phase</th><th>WBS Code</th><th>Actions</th></tr></thead><tbody>
-  ${items.map(p=>`<tr class="row" data-open="${p.id}"><td><b>${esc(p.title)}</b></td><td>${esc(p.pm)}</td><td>${esc(p.fund)}</td><td>${esc(p.sponsor)}</td><td class="num">${money(p.budget)}</td><td class="num">${money(p.actuals)}</td><td><span class="pill">${p.phase}</span></td><td>${esc(p.wbs)}</td>
-  <td><button class="lnk" data-open="${p.id}">View</button><span class="sep">|</span><button class="lnk" data-open="${p.id}">Edit</button></td></tr>`).join('')||'<tr><td colspan="9" class="muted">No projects</td></tr>'}
+  <thead><tr><th>Project Title</th><th>PM</th><th>Domain</th><th>Funding Source</th><th>Sponsor Name</th><th class="num">Budget</th><th class="num">Current Actuals</th><th>Phase</th><th>WBS Code</th><th>Actions</th></tr></thead><tbody>
+  ${items.map(p=>`<tr class="row" data-open="${p.id}"><td><b>${esc(p.title)}</b></td><td><select class="pmsel" data-pm="${p.id}" aria-label="Project manager">${pmOpts(p.pm)}</select></td><td>${esc(p.fund)}</td><td>${esc(p.sponsor)}</td><td class="num">${money(p.budget)}</td><td class="num">${money(p.actuals)}</td><td><span class="pill">${p.phase}</span></td><td>${esc(p.wbs)}</td>
+  <td><button class="lnk" data-open="${p.id}">View</button><span class="sep">|</span><button class="lnk" data-open="${p.id}">Edit</button></td></tr>`).join('')||'<tr><td colspan="10" class="muted">No projects</td></tr>'}
   </tbody></table></div></section>`;
 }
+const PMS=['Sarah Mitchell','David Chen','Priya Nair','Tom Brennan','Lena Ortiz','Marcus Hill','Olivia Grant'];
+const pmOpts=cur=>[...new Set([...PMS,...db.projects.map(p=>p.pm).filter(Boolean)])].concat('').filter((v,i,a)=>v!==''||cur==='').map(n=>`<option ${n===cur?'selected':''}>${esc(n)}</option>`).join('')||'<option></option>';
+const SFIELDS=[['any','Any column'],['title','Project Title'],['pm','PM'],['domain','Domain'],['fund','Funding Source'],['sponsor','Sponsor Name'],['budget','Budget'],['actuals','Current Actuals'],['phase','Phase'],['wbs','WBS Code']];
+const SOPS=[['contains','contains'],['equals','equals'],['starts','starts with'],['not','does not contain'],['gt','greater than'],['lt','less than']];
+const NUMF=['budget','actuals'];
+let sopen=false,sdraft=[{f:'any',op:'contains',v:''}],sapplied=[],smatch='all';
+function matchOne(p,c){
+  const v=String(c.v).trim().toLowerCase();if(!v)return true;
+  const test=txt=>{txt=String(txt).toLowerCase();
+    return c.op==='equals'?txt===v:c.op==='starts'?txt.startsWith(v):c.op==='not'?!txt.includes(v):txt.includes(v)};
+  if(c.op==='gt'||c.op==='lt'){
+    const n=parseFloat(v.replace(/[$,]/g,''));if(isNaN(n))return false;
+    const fs=c.f==='any'?NUMF:[c.f].filter(f=>NUMF.includes(f));
+    return fs.some(f=>c.op==='gt'?p[f]>n:p[f]<n);
+  }
+  const fs=c.f==='any'?SFIELDS.slice(1).map(x=>x[0]):[c.f];
+  const hit=f=>test(p[f])||(NUMF.includes(f)&&test(money(p[f])));
+  return c.op==='not'?fs.every(f=>hit(f)):fs.some(hit);
+}
+const matchP=p=>{const cs=sapplied.filter(c=>String(c.v).trim());if(!cs.length)return true;
+  return smatch==='all'?cs.every(c=>matchOne(p,c)):cs.some(c=>matchOne(p,c))};
+function searchPanel(){
+  return `<div class="card"><header><button class="lnk" data-stoggle aria-expanded="${sopen}">${sopen?'▼':'▶'} Advanced search</button>${sapplied.some(c=>String(c.v).trim())?`<span class="pill warn">Filter active (${sapplied.filter(c=>String(c.v).trim()).length})</span>`:''}</header>
+  ${sopen?`<div class="body"><div class="srow"><label>Match</label><select id="smatch" style="width:auto"><option value="all" ${smatch==='all'?'selected':''}>All criteria (AND)</option><option value="any" ${smatch==='any'?'selected':''}>Any criteria (OR)</option></select></div>
+  ${sdraft.map((c,i)=>`<div class="srow"><select data-sc="f" data-i="${i}">${SFIELDS.map(([k,l])=>`<option value="${k}" ${k===c.f?'selected':''}>${l}</option>`).join('')}</select><select data-sc="op" data-i="${i}">${SOPS.map(([k,l])=>`<option value="${k}" ${k===c.op?'selected':''}>${l}</option>`).join('')}</select><input data-sc="v" data-i="${i}" value="${esc(c.v)}" placeholder="Search value"><button class="lnk" data-sdel="${i}" ${sdraft.length<2?'disabled':''}>Remove</button></div>`).join('')}
+  <div class="srow"><button class="btn sm ghost" data-sadd>+ Add criteria</button><span style="margin-left:auto"></span><button class="btn sm ghost" data-sclear>Clear</button><button class="btn sm" data-sgo>Search</button></div></div>`:''}</div>`;
+}
+function readSearch(){
+  document.querySelectorAll('[data-sc]').forEach(el=>{sdraft[+el.dataset.i][el.dataset.sc]=el.value});
+  const m=$('#smatch');if(m)smatch=m.value;
+}
 function projectsList(){
-  return `<div class="pagehead"><h1>Projects</h1><button class="btn" data-newproj>+ New project</button></div>
-  ${plist('Active Projects',db.projects.filter(p=>p.status==='Active'))}${plist('Future Pipeline of Work',db.projects.filter(p=>p.status==='Pipeline'))}
+  const f=p=>matchP(p);
+  return `<div class="pagehead"><h1>Projects</h1><button class="btn" data-newproj>+ New project</button></div>${searchPanel()}
+  ${plist('Active Projects',db.projects.filter(p=>p.status==='Active'&&f(p)))}${plist('Future Pipeline of Work',db.projects.filter(p=>p.status==='Pipeline'&&f(p)))}
   <p class="muted">Tip: double-click a row to open the project.</p>`;
 }
 
@@ -201,7 +236,7 @@ function tabBody(p,t){
     const f=(k,l,type='text',opts)=>`<div><label for="f_${k}">${l}</label>${opts?`<select id="f_${k}" data-f="${k}">${opts.map(o=>`<option ${o==p[k]?'selected':''}>${o}</option>`).join('')}</select>`:`<input id="f_${k}" data-f="${k}" type="${type}" value="${esc(p[k])}">`}</div>`;
     const remain=p.budget-p.actuals,pct=p.budget?Math.round(p.actuals/p.budget*100):0;
     return `<div class="kpis"><div class="kpi"><small>Budget</small><b>${money(p.budget)}</b></div><div class="kpi"><small>Current Actuals</small><b>${money(p.actuals)}</b></div><div class="kpi"><small>Remaining</small><b>${money(remain)}</b></div><div class="kpi"><small>Spent</small><b>${pct}%</b></div><div class="kpi"><small>Forecast at completion</small><b class="${p.forecast>p.budget?'over':''}">${money(p.forecast)}</b></div><div class="kpi"><small>Health</small><b><span class="pill ${pillFor(p.health)}">${p.health}</span></b></div></div>
-    <div class="card"><div class="body"><div class="grid">${f('title','Project Title')}${f('pm','Project Manager')}${f('sponsor','Sponsor Name')}${f('fund','Funding Source','text',FUNDING)}${f('budget','Budget ($)','number')}${f('actuals','Current Actuals ($)','number')}${f('forecast','Forecast ($)','number')}${f('phase','Phase','text',PHASES)}${f('wbs','WBS Code')}${f('status','Portfolio Status','text',['Active','Pipeline'])}${f('health','Health','text',['Green','Amber','Red'])}${f('start','Start Date','date')}${f('end','End Date','date')}</div>
+    <div class="card"><div class="body"><div class="grid">${f('title','Project Title')}${f('pm','Project Manager','text',[...new Set([...PMS,...db.projects.map(x=>x.pm).filter(Boolean)])])}${f('sponsor','Sponsor Name')}${f('domain','Domain','text',DOMAINS)}${f('fund','Funding Source','text',FUNDING)}${f('budget','Budget ($)','number')}${f('actuals','Current Actuals ($)','number')}${f('forecast','Forecast ($)','number')}${f('phase','Phase','text',PHASES)}${f('wbs','WBS Code')}${f('status','Portfolio Status','text',['Active','Pipeline'])}${f('health','Health','text',['Green','Amber','Red'])}${f('start','Start Date','date')}${f('end','End Date','date')}</div>
     <div style="margin-top:14px"><label for="f_desc">Description / Objectives</label><textarea id="f_desc" data-f="desc" rows="3">${esc(p.desc)}</textarea></div>
     <div style="margin-top:14px"><button class="btn" data-savep>Save changes</button></div></div></div>`;
   }
@@ -303,8 +338,14 @@ function resourcesView(){
 }
 
 document.addEventListener('click',e=>{
+  if(e.target.closest('select,input'))return;
   const t=e.target.closest('button,tr.row,a[data-nav]');if(!t)return;
   if(t.tagName==='A')e.preventDefault();
+  if(t.dataset.stoggle!==undefined){readSearch();sopen=!sopen;render();return}
+  if(t.dataset.sadd!==undefined){readSearch();sdraft.push({f:'any',op:'contains',v:''});render();return}
+  if(t.dataset.sdel!==undefined){readSearch();sdraft.splice(+t.dataset.sdel,1);render();return}
+  if(t.dataset.sclear!==undefined){sdraft=[{f:'any',op:'contains',v:''}];sapplied=[];smatch='all';render();return}
+  if(t.dataset.sgo!==undefined){readSearch();sapplied=JSON.parse(JSON.stringify(sdraft));render();return}
   if(t.dataset.chart){const id=+t.dataset.chart;chartOpen.has(id)?chartOpen.delete(id):chartOpen.add(id);render();return}
   if(t.dataset.addrow){D().push({id:db.nextId.a++,res:+t.dataset.addrow,project:'',phase:'ANALYSE',start:TODAY,end:TODAY,pct:0});render();return}
   if(t.dataset.cancelres){const id=+t.dataset.cancelres;draft=D().filter(a=>a.res!==id).concat(JSON.parse(JSON.stringify(db.allocations.filter(a=>a.res===id))));render();return}
@@ -325,7 +366,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.open){go({page:'projects',pid:+t.dataset.open,tab:'Details'});return}
   if(t.hasAttribute('data-newproj')){
     const title=prompt('Project title?');if(!title)return;
-    const id=db.nextId.p++;db.projects.push({id,title,pm:'',fund:'IT CAPEX',sponsor:'',budget:0,actuals:0,phase:'ANALYSE',wbs:'',status:'Pipeline',start:TODAY,end:TODAY,desc:'',health:'Green',forecast:0});
+    const id=db.nextId.p++;db.projects.push({id,title,domain:'Technology Delivery',pm:'',fund:'IT CAPEX',sponsor:'',budget:0,actuals:0,phase:'ANALYSE',wbs:'',status:'Pipeline',start:TODAY,end:TODAY,desc:'',health:'Green',forecast:0});
     log(id,'Project created');save();go({pid:id,tab:'Details'});return}
   if(t.hasAttribute('data-savep')){
     const p=proj(route.pid),ch=[];
@@ -342,10 +383,11 @@ document.addEventListener('click',e=>{
   if(t.dataset.addrisk){const title=prompt('Risk description?');if(!title)return;
     db.risks.push({id:db.nextId.r++,project:+t.dataset.addrisk,title,cat:'Delivery',lik:'Medium',imp:'Medium',owner:proj(t.dataset.addrisk).pm,mit:'TBD',status:'Open'});log(+t.dataset.addrisk,`Added risk "${title}"`);save();render();return}
 });
-document.addEventListener('dblclick',e=>{const r=e.target.closest('tr.row');if(r)go({page:'projects',pid:+r.dataset.open,tab:'Details'})});
+document.addEventListener('dblclick',e=>{if(e.target.closest('select,input'))return;const r=e.target.closest('tr.row');if(r)go({page:'projects',pid:+r.dataset.open,tab:'Details'})});
 document.addEventListener('change',e=>{
   const el=e.target;
   if(el.id==='domsel'){route.domain=el.value;render();return}
+  if(el.dataset.pm){const p=proj(el.dataset.pm);if(p.pm!==el.value){log(p.id,`PM changed: ${p.pm||'(none)'} → ${el.value}`);p.pm=el.value;save();render()}return}
   if(el.dataset.al){const a=D().find(x=>x.id==el.dataset.al),k=el.dataset.k;
     if(k==='pct')a.pct=Math.max(0,Number(el.value)||0);
     else{a[k]=el.value;if(k!=='project'&&k!=='phase'&&a.end<a.start){if(k==='start')a.end=a.start;else a.start=a.end}}
