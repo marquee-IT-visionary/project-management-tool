@@ -11,6 +11,23 @@
 body{margin:0;background:var(--bg);color:var(--text);font:400 15px/1.5 'Public Sans','Segoe UI',Arial,sans-serif}
 h1,h2,h3{color:var(--navy);margin:0;line-height:1.25}h1{font-size:28px}h2{font-size:19px}h3{font-size:16px}
 a{color:var(--link)}
+.chart{padding:12px 16px 8px;border-bottom:1px solid var(--line)}
+.chead,.cbody{position:relative;margin-left:90px}
+.chead{height:22px;border-bottom:1px solid var(--line)}
+.mcol{position:absolute;top:0;bottom:0;border-left:1px solid var(--line)}
+.chead .mcol span{font-size:11px;color:var(--muted);padding-left:3px;white-space:nowrap}
+.cbody{padding:4px 0}
+.cbody>.mcol{top:0;bottom:0;height:100%}
+.crow{position:relative;height:26px;z-index:1}
+.bar{position:absolute;top:2px;height:22px;border-radius:3px;color:#fff;font-size:12px;font-weight:600;line-height:22px;padding:0 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;opacity:.92}
+.crow.load{margin-top:6px;border-top:2px solid var(--navy);padding-top:2px}
+.ltag{position:absolute;left:-90px;top:4px;font-size:12px;color:var(--navy);width:84px}
+.seg{position:absolute;top:2px;height:22px;text-align:center;font-size:12px;font-weight:700;line-height:22px;border-right:2px solid #fff;overflow:hidden}
+.seg.g{background:var(--ok-bg);color:var(--ok)}.seg.a{background:var(--warn-bg);color:var(--warn)}.seg.r{background:var(--bad);color:#fff}
+.tline{position:absolute;top:0;bottom:0;width:2px;background:var(--waratah);z-index:2}.tline em{position:absolute;top:-16px;left:-14px;font-size:10px;font-style:normal;color:var(--waratah);font-weight:700}
+.legend{display:flex;gap:18px;font-size:12px;color:var(--muted);margin:8px 0 0 90px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;margin-right:5px;vertical-align:-2px;border-radius:2px}
+.legend i.g{background:var(--ok-bg);border:1px solid var(--ok)}.legend i.a{background:var(--warn-bg);border:1px solid var(--warn)}.legend i.r{background:var(--bad)}
 .gov{background:#1B3370;color:#fff;font-size:12px;padding:5px 22px}
 header.site{background:#fff;display:flex;align-items:center;gap:18px;padding:12px 22px}
 .tlogo{height:54px;width:auto}
@@ -234,6 +251,34 @@ function overPeriods(allocs){
   }
   return out;
 }
+const PAL=['#146CFD','#00A6D5','#8A4FFF','#E8730C','#00663A','#C2185B','#7A4E00','#0F6F73','#5A32D6','#A8102B'];
+const pcol=id=>PAL[(Number(id)||0)%PAL.length];
+function segments(allocs){
+  const pts=[...new Set(allocs.flatMap(a=>[a.start,nextDay(a.end)]))].sort(),out=[];
+  for(let i=0;i<pts.length-1;i++){const d=pts[i];
+    const sum=allocs.filter(a=>a.start<=d&&d<=a.end).reduce((s,a)=>s+Number(a.pct),0);
+    if(sum>0)out.push({from:d,to:prevDay(pts[i+1]),sum});}
+  return out;
+}
+// Timeline: one bar per allocation plus a total-load strip (red above 100%, amber under 100%, green at 100%)
+function chart(al){
+  const rows=al.filter(a=>a.start&&a.end&&a.end>=a.start).sort((a,b)=>a.start.localeCompare(b.start));
+  if(!rows.length)return '';
+  const ms=iso=>Date.parse(iso+'T00:00:00Z');
+  const first=new Date(ms(rows.reduce((m,a)=>a.start<m?a.start:m,rows[0].start)));first.setUTCDate(1);
+  const lastD=new Date(ms(rows.reduce((m,a)=>a.end>m?a.end:m,rows[0].end)));lastD.setUTCMonth(lastD.getUTCMonth()+1,1);
+  const t0=first.getTime(),t1=lastD.getTime(),span=t1-t0;
+  const x=iso=>(ms(iso)-t0)/span*100,w=(a,b)=>(ms(b)-ms(a)+864e5)/span*100;
+  const months=[];for(let d=new Date(t0);d<t1;d.setUTCMonth(d.getUTCMonth()+1))months.push(new Date(d));
+  const mw=100/months.length;
+  const grid=months.map((m,i)=>`<div class="mcol" style="left:${i*mw}%;width:${mw}%"><span>${m.toLocaleString('en-AU',{month:'short',timeZone:'UTC'})}${m.getUTCMonth()===0||i===0?' '+m.getUTCFullYear():''}</span></div>`).join('');
+  const tx=(ms(TODAY)-t0)/span*100;
+  const today=tx>=0&&tx<=100?`<div class="tline" style="left:${tx}%"><em>Today</em></div>`:'';
+  const bars=rows.map(a=>`<div class="crow"><div class="bar" style="left:${x(a.start)}%;width:${w(a.start,a.end)}%;background:${pcol(a.project)}" title="${esc(proj(a.project)?.title||'')} · ${a.phase} · ${a.pct}% · ${dmy(a.start)}–${dmy(a.end)}"><span>${esc(proj(a.project)?.title||'(no project)')} · ${a.pct}%</span></div></div>`).join('');
+  const load=segments(rows).map(s=>{const c=s.sum>100?'r':s.sum===100?'g':'a';return `<div class="seg ${c}" style="left:${x(s.from)}%;width:${w(s.from,s.to)}%" title="${dmy(s.from)}–${dmy(s.to)}: ${s.sum}% allocated"><span>${s.sum}%</span></div>`}).join('');
+  return `<div class="chart"><div class="chead">${grid}</div><div class="cbody">${grid.replace(/<span>.*?<\/span>/g,'')}${today}${bars}<div class="crow load"><b class="ltag">Total load</b>${load}</div></div>
+  <div class="legend"><span><i class="g"></i>100% (fully used)</span><span><i class="a"></i>Under 100% (spare capacity)</span><span><i class="r"></i>Over 100% (bandwidth issue)</span></div></div>`;
+}
 function resourcesView(){
   const dom=route.domain||'All';
   const list=db.resources.filter(r=>dom==='All'||r.domain===dom);
@@ -248,6 +293,7 @@ function resourcesView(){
     const isOver=a=>over.some(o=>a.start<=o.to&&a.end>=o.from);
     return `<section class="card"><div class="rhead"><h2>${esc(r.name)}</h2><span class="meta">${esc(r.role)}</span><span class="meta">Domain: ${esc(r.domain)}</span><span class="meta">Category: <span class="ro" title="Read only">${esc(r.category)}</span></span><span class="tot ${cur>100?'over':''}">Current allocation today: ${cur}%</span></div>
     ${over.length?`<div class="note">Over-allocated: ${over.map(o=>`${dmy(o.from)} – ${dmy(o.to)} (${o.sum}%)`).join('; ')}</div>`:''}
+    ${chart(al)}
     <div class="tw"><table><thead><tr><th>Project Title</th><th>Project Phase</th><th>Allocation Start Date</th><th>Allocation End Date</th><th class="num">Current Allocation</th><th></th></tr></thead><tbody>
     ${al.map(a=>`<tr class="${isOver(a)?'over':''}"><td><select data-al="${a.id}" data-k="project">${projOpts(a.project)}</select></td><td><select data-al="${a.id}" data-k="phase">${PHASES.map(p=>`<option ${p==a.phase?'selected':''}>${p}</option>`).join('')}</select></td><td><input type="date" data-al="${a.id}" data-k="start" value="${a.start}"></td><td><input type="date" data-al="${a.id}" data-k="end" value="${a.end}"></td><td class="num"><input type="number" min="0" max="200" data-al="${a.id}" data-k="pct" value="${a.pct}"> %</td><td><button class="lnk" data-delal="${a.id}">Remove</button></td></tr>`).join('')||'<tr><td colspan="6" class="muted">No allocations</td></tr>'}</tbody></table></div>
     <div class="savebar" style="${dirty?'':'background:none'}"><button class="btn sm ghost" data-addrow="${r.id}">+ Add project</button>${dirty?`<span style="margin-left:auto"><b>Unsaved changes</b></span><button class="btn sm ghost" data-cancelres="${r.id}">Cancel</button><button class="btn sm" data-saveres="${r.id}">Save</button>`:''}</div></section>`}).join('')||'<p class="muted">No resources in this domain.</p>');
