@@ -238,7 +238,7 @@ function tabBody(p,t){
     return `<div class="kpis"><div class="kpi"><small>Budget</small><b>${money(p.budget)}</b></div><div class="kpi"><small>Current Actuals</small><b>${money(p.actuals)}</b></div><div class="kpi"><small>Remaining</small><b>${money(remain)}</b></div><div class="kpi"><small>Spent</small><b>${pct}%</b></div><div class="kpi"><small>Forecast at completion</small><b class="${p.forecast>p.budget?'over':''}">${money(p.forecast)}</b></div><div class="kpi"><small>Health</small><b><span class="pill ${pillFor(p.health)}">${p.health}</span></b></div></div>
     <div class="card"><div class="body"><div class="grid">${f('title','Project Title')}${f('pm','Project Manager','text',[...new Set([...PMS,...db.projects.map(x=>x.pm).filter(Boolean)])])}${f('sponsor','Sponsor Name')}${f('domain','Domain','text',DOMAINS)}${f('fund','Funding Source','text',FUNDING)}${f('budget','Budget ($)','number')}${f('actuals','Current Actuals ($)','number')}${f('forecast','Forecast ($)','number')}${f('phase','Phase','text',PHASES)}${f('wbs','WBS Code')}${f('status','Portfolio Status','text',['Active','Pipeline'])}${f('health','Health','text',['Green','Amber','Red'])}${f('start','Start Date','date')}${f('end','End Date','date')}</div>
     <div style="margin-top:14px"><label for="f_desc">Description / Objectives</label><textarea id="f_desc" data-f="desc" rows="3">${esc(p.desc)}</textarea></div>
-    <div style="margin-top:14px"><button class="btn" data-savep>Save changes</button></div></div></div>`;
+    <div style="margin-top:14px"><button class="btn ghost" data-cancelp>Cancel</button> <button class="btn" data-savep>Save</button></div></div></div>`;
   }
   if(t==='Resource'){
     const al=db.allocations.filter(a=>a.project==p.id);
@@ -368,10 +368,12 @@ document.addEventListener('click',e=>{
     const title=prompt('Project title?');if(!title)return;
     const id=db.nextId.p++;db.projects.push({id,title,domain:'Technology Delivery',pm:'',fund:'IT CAPEX',sponsor:'',budget:0,actuals:0,phase:'ANALYSE',wbs:'',status:'Pipeline',start:TODAY,end:TODAY,desc:'',health:'Green',forecast:0});
     log(id,'Project created');save();go({pid:id,tab:'Details'});return}
+  if(t.hasAttribute('data-cancelp')){render();return}
   if(t.hasAttribute('data-savep')){
     const p=proj(route.pid),ch=[];
     document.querySelectorAll('[data-f]').forEach(el=>{const k=el.dataset.f;const v=el.type==='number'?Number(el.value):el.value;if(p[k]!==v){ch.push(`${k}: "${p[k]}" → "${v}"`);p[k]=v}});
-    if(ch.length){log(p.id,'Updated '+ch.join('; '));save();render()}return}
+    if(ch.length){log(p.id,'Updated '+ch.join('; '));save()}
+    render();return}
   if(t.dataset.addalloc){
     const name=prompt('Resource name (exact):\n'+db.resources.map(r=>r.name).join(', '));const r=db.resources.find(x=>x.name.toLowerCase()===(name||'').toLowerCase());if(!r)return;
     const p=proj(t.dataset.addalloc);
