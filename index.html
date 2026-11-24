@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transport Project Portfolio Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#002664;--navy2:#001A47;--blue:#146CFD;--waratah:#D7153A;--bg:#F2F4F8;--surface:#fff;--surface2:#F2F2F2;--rail:#E9ECF1;--text:#1F2933;--muted:#53606D;--line:#D3D8DE;--link:#0B4BC4;--ok:#00663A;--ok-bg:#DDF3E5;--warn:#7A4E00;--warn-bg:#FFF0C7;--bad:#A8102B;--bad-bg:#FCE3E8;--info:#E3EEFF}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:400 15px/1.5 'Public Sans','Segoe UI',Arial,sans-serif}
+h1,h2,h3{color:var(--navy);margin:0;line-height:1.25}h1{font-size:28px}h2{font-size:19px}h3{font-size:16px}
+a{color:var(--link)}
+.mast{background:var(--navy2);color:#fff;font-size:12px;padding:4px 20px}
+.top{position:sticky;top:0;z-index:50;background:var(--navy);color:#fff;display:flex;align-items:center;gap:16px;padding:10px 20px}
+.logo{width:48px;height:48px;background:#fff;color:var(--navy);display:grid;place-items:center;font-weight:700;font-size:20px;border-bottom:5px solid var(--waratah)}
+.top b{display:block;font-size:20px;line-height:1.2}.top small{font-size:13px;opacity:.9}
+.top .user{margin-left:auto;text-align:right;font-size:13px}
+.shell{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:calc(100vh - 100px)}
+.rail{background:var(--rail);border-right:1px solid var(--line);padding:14px 10px}
+.rail button{display:block;width:100%;text-align:left;padding:10px 12px;border:0;border-left:4px solid transparent;background:none;font:500 15px inherit;color:var(--text);cursor:pointer;border-radius:4px}
+.rail button:hover{background:var(--surface2)}
+.rail button.on{background:#fff;border-left-color:var(--waratah);font-weight:700;color:var(--navy)}
+main{padding:24px 28px 60px;min-width:0}
+.pagehead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;margin-bottom:24px}
+.card>header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.count{background:var(--navy);color:#fff;border-radius:12px;padding:1px 10px;font-size:13px;font-weight:600}
+.card .body{padding:16px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{background:var(--surface2);color:var(--navy);text-align:left;padding:9px 12px;border-bottom:2px solid var(--navy);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr.row{cursor:pointer}tbody tr.row:hover{background:var(--info)}
+td.num,th.num{text-align:right}
+.btn{background:var(--navy);color:#fff;border:2px solid var(--navy);border-radius:4px;padding:7px 14px;font:600 14px inherit;cursor:pointer}
+.btn:hover{background:#0A3585}.btn.sm{padding:3px 10px;font-size:13px}
+.lnk{background:none;border:0;color:var(--link);font:600 14px inherit;cursor:pointer;padding:0;text-decoration:underline}
+.sep{color:var(--muted);margin:0 6px}
+.pill{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;background:var(--info);color:var(--navy)}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;flex-wrap:wrap}
+.tabs button{background:none;border:0;border-bottom:4px solid transparent;padding:10px 16px;font:600 15px inherit;color:var(--text);cursor:pointer}
+.tabs button:hover{background:var(--surface2)}
+.tabs button.on{border-bottom-color:var(--waratah);color:var(--navy)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+label{display:block;font-weight:600;font-size:13px;color:var(--muted);margin-bottom:3px}
+input,select,textarea{width:100%;padding:7px 9px;border:1px solid #76838F;border-radius:4px;font:inherit;background:#fff;color:var(--text)}
+td input,td select{padding:4px 6px;font-size:14px}
+input[type=number]{width:80px;text-align:right}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:#fff;border:1px solid var(--line);border-top:4px solid var(--navy);border-radius:4px;padding:10px 14px}
+.kpi small{color:var(--muted);display:block}.kpi b{font-size:20px;color:var(--navy)}
+.over,.over input,.over select{color:var(--bad)!important;font-weight:700}
+.over input{border-color:var(--bad)}
+.rhead{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.rhead .meta{color:var(--muted);font-size:13px}.rhead .tot{margin-left:auto;font-weight:700}
+.note{color:var(--bad);font-size:13px;padding:8px 16px;background:var(--bad-bg)}
+.gantt{position:relative;height:22px;background:var(--surface2);border-radius:3px;min-width:260px}
+.gantt i{position:absolute;top:3px;height:16px;background:var(--navy);border-radius:2px}
+.gantt i.done{background:var(--ok)}.gantt i.cur{background:var(--blue)}
+.today{position:absolute;top:0;bottom:0;width:2px;background:var(--waratah)}
+.muted{color:var(--muted)}
+@media(max-width:800px){.shell{grid-template-columns:1fr}.rail{display:flex;overflow:auto}.rail button{white-space:nowrap}}
+</style>
+</head>
+<body>
+<div class="mast">Transport — Project Portfolio Manager (demo, data stored in your browser)</div>
+<div class="top"><div class="logo">T</div><div><b>Project Portfolio Manager</b><small>Transport for NSW · Technology Delivery</small></div><div class="user">Portfolio Office<br><small id="today"></small></div></div>
+<div class="shell"><nav class="rail" id="rail" aria-label="Main"></nav><main id="main"></main></div>
+<script>
+const PHASES=['ANALYSE','DESIGN','BUILD & TEST','DEPLOY','CLOSE'];
+const FUNDING=['Business CAPEX','IT CAPEX','IT OPEX'];
+const STORE='tfnsw-pm-v1';
+const TODAY=new Date().toISOString().slice(0,10);
+
+function seed(){
+  const P=(id,title,pm,fund,sponsor,budget,actuals,phase,wbs,status,start,end,desc)=>({id,title,pm,fund,sponsor,budget,actuals,phase,wbs,status,start,end,desc,health:'Green',forecast:budget});
+  const projects=[
+    P(1,'Digital Ticketing Platform Upgrade','Sarah Mitchell','IT CAPEX','Clint Eastwood',2500000,860000,'BUILD & TEST','P.001880.01.001','Active','2026-03-01','2027-06-30','Upgrade of the ticketing back-end and customer-facing channels.'),
+    P(2,'Fleet Maintenance System Replacement','David Chen','Business CAPEX','John Wayne',1200000,310000,'DESIGN','P.001912.02.004','Active','2026-06-01','2027-09-30','Replace legacy fleet maintenance system with a cloud platform.'),
+    P(3,'Customer Data Platform','Priya Nair','IT CAPEX','Meryl Streep',500000,25000,'ANALYSE','P.002004.01.002','Active','2026-10-01','2027-04-30','Consolidated customer data platform for analytics.'),
+    P(4,'Network Monitoring Modernisation','Tom Brennan','IT OPEX','Clint Eastwood',205000,142000,'DEPLOY','P.001745.03.001','Active','2026-01-15','2027-01-29','Replace network monitoring tooling across depots.'),
+    P(5,'Passenger Information Display Refresh','Sarah Mitchell','Business CAPEX','Audrey Hepburn',3400000,1950000,'BUILD & TEST','P.001650.01.007','Active','2025-09-01','2027-03-31','Refresh of real-time passenger information displays.'),
+    P(6,'Cyber Security Uplift Program','Lena Ortiz','IT OPEX','John Wayne',750000,515000,'DESIGN','P.001990.04.003','Active','2026-04-01','2027-05-31','Uplift controls to meet updated cyber security policy.'),
+    P(7,'Asset Register Consolidation','David Chen','IT CAPEX','Meryl Streep',900000,0,'ANALYSE','P.002101.01.001','Pipeline','2027-02-01','2027-12-15','Single asset register across modes.'),
+    P(8,'Mobile Workforce App','Priya Nair','IT CAPEX','Audrey Hepburn',650000,0,'ANALYSE','P.002115.01.001','Pipeline','2027-03-01','2027-10-30','Mobile app for field crews.'),
+    P(9,'Data Centre Exit Stage 2','Tom Brennan','IT OPEX','Clint Eastwood',1800000,0,'ANALYSE','P.002130.02.001','Pipeline','2027-04-01','2028-03-31','Migrate remaining workloads to cloud.'),
+    P(10,'Accessibility Compliance Remediation','Lena Ortiz','Business CAPEX','John Wayne',420000,0,'ANALYSE','P.002144.01.001','Pipeline','2027-05-01','2027-11-30','Remediate digital channels for WCAG 2.2.')];
+  projects[1].health='Amber';projects[4].health='Red';projects[4].forecast=3650000;
+  const res=['Alex Turner','Bianca Rossi','Chris Walker','Dana Lee','Ethan Park','Fiona Gallagher','Grace Kim','Hugo Santos'];
+  const roles=['Business Analyst','Solution Architect','Developer','Test Lead','Developer','Change Manager','Scrum Master','Security Analyst'];
+  const resources=res.map((n,i)=>({id:i+1,name:n,role:roles[i]}));
+  let aid=1;const A=(r,p,phase,s,e,pct)=>({id:aid++,res:r,project:p,phase,start:s,end:e,pct});
+  const allocations=[
+    A(1,3,'ANALYSE','2026-11-01','2026-12-31',30),A(1,3,'BUILD & TEST','2027-01-15','2027-01-30',20),A(1,1,'BUILD & TEST','2026-10-01','2027-02-28',50),A(1,2,'DESIGN','2026-11-15','2027-01-31',30),
+    A(2,1,'BUILD & TEST','2026-09-01','2027-03-31',60),A(2,6,'DESIGN','2026-10-01','2027-02-28',40),
+    A(3,5,'BUILD & TEST','2026-08-01','2027-02-28',70),A(3,4,'DEPLOY','2026-11-01','2027-01-29',30),
+    A(4,1,'BUILD & TEST','2026-10-15','2027-03-31',50),A(4,5,'BUILD & TEST','2026-10-15','2027-02-28',50),A(4,2,'DESIGN','2026-12-01','2027-02-28',20),
+    A(5,2,'DESIGN','2026-09-01','2027-01-31',50),A(5,6,'DESIGN','2026-09-01','2027-01-31',50),
+    A(6,1,'BUILD & TEST','2026-10-01','2027-03-31',40),A(6,3,'ANALYSE','2026-10-15','2027-01-31',20),
+    A(7,5,'BUILD & TEST','2026-09-01','2027-03-31',100),
+    A(8,6,'DESIGN','2026-10-01','2027-02-28',60),A(8,4,'DEPLOY','2026-11-01','2027-01-29',20)];
+  const rk=(p,title,cat,lik,imp,owner,mit,status)=>({project:p,title,cat,lik,imp,owner,mit,status});
+  const risks=[
+    rk(1,'Vendor API delays integration testing','Delivery','High','High','Sarah Mitchell','Weekly vendor checkpoint; stub APIs','Open'),
+    rk(1,'Key developer attrition','Resourcing','Medium','Medium','Sarah Mitchell','Knowledge transfer sessions','Open'),
+    rk(2,'Data migration quality from legacy','Technical','High','Medium','David Chen','Early data profiling','Mitigating'),
+    rk(3,'Privacy impact assessment not approved','Compliance','Medium','High','Priya Nair','Engage privacy office early','Open'),
+    rk(4,'Depot downtime window unavailable','Operational','Low','High','Tom Brennan','Agree windows in advance','Open'),
+    rk(5,'Hardware supply chain delay','Procurement','High','High','Sarah Mitchell','Place early orders; alt supplier','Escalated'),
+    rk(5,'Cost forecast exceeds budget','Financial','High','High','Sarah Mitchell','Change request for additional funding','Escalated'),
+    rk(6,'Scope creep from new policy','Scope','Medium','Medium','Lena Ortiz','Strict change control','Open'),
+    rk(7,'Business case not endorsed','Strategic','Medium','High','David Chen','Sponsor briefing','Open')
+  ].map((r,i)=>({...r,id:i+1}));
+  const ms=[];let mid=1;
+  projects.forEach(p=>{const n=p.status==='Active'?4:2;const per=Math.round(p.budget*0.8/n/1000)*1000;
+    for(let i=0;i<n;i++){const d=new Date(p.start);d.setMonth(d.getMonth()+3*(i+1));const iso=d.toISOString().slice(0,10);
+      ms.push({id:mid++,project:p.id,name:['Design sign-off','Build complete','UAT complete','Go-live'][i]||'Milestone '+(i+1),vendor:['Accenture','Deloitte','Telstra','Infosys'][(p.id+i)%4],amount:per,due:iso,status:iso<TODAY?(i%3===2?'Overdue':'Paid'):'Planned'});}});
+  const audit=[{id:1,project:1,when:new Date().toISOString(),who:'System',what:'Project created (seed data)'}];
+  return {projects,resources,allocations,risks,ms,audit,nextId:{p:11,a:aid,r:risks.length+1,m:mid,aud:2}};
+}
+let db=JSON.parse(localStorage.getItem(STORE)||'null')||seed();
+const save=()=>localStorage.setItem(STORE,JSON.stringify(db));
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>n>=1e6?'$'+(n/1e6).toFixed(n%1e5===0?1:2)+'M':'$'+Math.round(n).toLocaleString('en-AU');
+const dmy=iso=>iso?iso.split('-').reverse().join('/'):'';
+const proj=id=>db.projects.find(p=>p.id==id);
+const log=(project,what)=>{db.audit.unshift({id:db.nextId.aud++,project,when:new Date().toISOString(),who:'Portfolio Office',what});};
+const pillFor=v=>({Green:'ok',Amber:'warn',Red:'bad',Paid:'ok',Overdue:'bad',Planned:'',Open:'warn',Mitigating:'',Escalated:'bad',Closed:'ok'}[v]||'');
+
+let route={page:'projects',pid:null,tab:'Details'};
+const MENU=[['projects','Projects'],['resources','Resources'],['risks','Risks'],['milestones','Invoice Milestones'],['audit','Audit Log']];
+const TABS=['Details','Resource','Schedule','Invoice Milestones','Risks','Audit'];
+
+function go(r){route={...route,...r};render();window.scrollTo(0,0)}
+
+function render(){
+  $('#today').textContent=dmy(TODAY);
+  $('#rail').innerHTML=MENU.map(([k,l])=>`<button class="${route.page===k?'on':''}" data-nav="${k}">${l}</button>`).join('');
+  const m=$('#main');
+  if(route.page==='projects')m.innerHTML=route.pid?projectView(proj(route.pid)):projectsList();
+  else if(route.page==='resources')m.innerHTML=resourcesView();
+  else if(route.page==='risks')m.innerHTML=risksView();
+  else if(route.page==='milestones')m.innerHTML=milestonesView();
+  else m.innerHTML=auditView();
+}
+
+function plist(title,items){
+  return `<section class="card"><header><h2>${title}</h2><span class="count" title="Number of projects">${items.length}</span></header><div class="tw"><table>
+  <thead><tr><th>Project Title</th><th>PM</th><th>Funding Source</th><th>Sponsor Name</th><th class="num">Budget</th><th class="num">Current Actuals</th><th>Phase</th><th>WBS Code</th><th>Actions</th></tr></thead><tbody>
+  ${items.map(p=>`<tr class="row" data-open="${p.id}"><td><b>${esc(p.title)}</b></td><td>${esc(p.pm)}</td><td>${esc(p.fund)}</td><td>${esc(p.sponsor)}</td><td class="num">${money(p.budget)}</td><td class="num">${money(p.actuals)}</td><td><span class="pill">${p.phase}</span></td><td>${esc(p.wbs)}</td>
+  <td><button class="lnk" data-open="${p.id}">View</button><span class="sep">|</span><button class="lnk" data-open="${p.id}">Edit</button></td></tr>`).join('')||'<tr><td colspan="9" class="muted">No projects</td></tr>'}
+  </tbody></table></div></section>`;
+}
+function projectsList(){
+  return `<div class="pagehead"><h1>Projects</h1><button class="btn" data-newproj>+ New project</button></div>
+  ${plist('Active Projects',db.projects.filter(p=>p.status==='Active'))}${plist('Future Pipeline of Work',db.projects.filter(p=>p.status==='Pipeline'))}
+  <p class="muted">Tip: double-click a row to open the project.</p>`;
+}
+
+function projectView(p){
+  const t=route.tab;
+  return `<div class="pagehead"><div><button class="lnk" data-nav="projects">&larr; Back to projects</button><h1>${esc(p.title)}</h1><span class="muted">${esc(p.wbs)} · ${esc(p.status)}</span></div></div>
+  <div class="tabs" role="tablist">${TABS.map(x=>`<button role="tab" class="${t===x?'on':''}" data-tab="${x}">${x}</button>`).join('')}</div>${tabBody(p,t)}`;
+}
+function tabBody(p,t){
+  if(t==='Details'){
+    const f=(k,l,type='text',opts)=>`<div><label for="f_${k}">${l}</label>${opts?`<select id="f_${k}" data-f="${k}">${opts.map(o=>`<option ${o==p[k]?'selected':''}>${o}</option>`).join('')}</select>`:`<input id="f_${k}" data-f="${k}" type="${type}" value="${esc(p[k])}">`}</div>`;
+    const remain=p.budget-p.actuals,pct=p.budget?Math.round(p.actuals/p.budget*100):0;
+    return `<div class="kpis"><div class="kpi"><small>Budget</small><b>${money(p.budget)}</b></div><div class="kpi"><small>Current Actuals</small><b>${money(p.actuals)}</b></div><div class="kpi"><small>Remaining</small><b>${money(remain)}</b></div><div class="kpi"><small>Spent</small><b>${pct}%</b></div><div class="kpi"><small>Forecast at completion</small><b class="${p.forecast>p.budget?'over':''}">${money(p.forecast)}</b></div><div class="kpi"><small>Health</small><b><span class="pill ${pillFor(p.health)}">${p.health}</span></b></div></div>
+    <div class="card"><div class="body"><div class="grid">${f('title','Project Title')}${f('pm','Project Manager')}${f('sponsor','Sponsor Name')}${f('fund','Funding Source','text',FUNDING)}${f('budget','Budget ($)','number')}${f('actuals','Current Actuals ($)','number')}${f('forecast','Forecast ($)','number')}${f('phase','Phase','text',PHASES)}${f('wbs','WBS Code')}${f('status','Portfolio Status','text',['Active','Pipeline'])}${f('health','Health','text',['Green','Amber','Red'])}${f('start','Start Date','date')}${f('end','End Date','date')}</div>
+    <div style="margin-top:14px"><label for="f_desc">Description / Objectives</label><textarea id="f_desc" data-f="desc" rows="3">${esc(p.desc)}</textarea></div>
+    <div style="margin-top:14px"><button class="btn" data-savep>Save changes</button></div></div></div>`;
+  }
+  if(t==='Resource'){
+    const al=db.allocations.filter(a=>a.project==p.id);
+    return `<div class="card"><header><h2>Allocated resources</h2><span class="count">${al.length}</span><button class="btn sm" style="margin-left:auto" data-addalloc="${p.id}">+ Add allocation</button></header><div class="tw"><table><thead><tr><th>Resource</th><th>Role</th><th>Phase</th><th>Start</th><th>End</th><th class="num">Allocation</th></tr></thead><tbody>
+    ${al.map(a=>{const r=db.resources.find(x=>x.id==a.res);return `<tr><td>${esc(r.name)}</td><td>${esc(r.role)}</td><td>${a.phase}</td><td>${dmy(a.start)}</td><td>${dmy(a.end)}</td><td class="num">${a.pct}%</td></tr>`}).join('')||'<tr><td colspan="6" class="muted">No resources allocated</td></tr>'}</tbody></table></div></div><p class="muted">Edit allocations from the Resources menu.</p>`;
+  }
+  if(t==='Schedule'){
+    const s=new Date(p.start).getTime(),e=new Date(p.end).getTime(),span=e-s,n=PHASES.length;
+    const rows=PHASES.map((ph,i)=>{const a=new Date(s+span*i/n).toISOString().slice(0,10),b=new Date(s+span*(i+1)/n).toISOString().slice(0,10);
+      const idx=PHASES.indexOf(p.phase);const st=i<idx?'Complete':i===idx?'In progress':'Not started';
+      const pc=st==='Complete'?100:st==='In progress'?Math.min(95,Math.max(5,Math.round((Date.now()-new Date(a))/(new Date(b)-new Date(a))*100))):0;
+      return `<tr><td><b>${ph}</b></td><td>${dmy(a)}</td><td>${dmy(b)}</td><td>${pc}%</td><td><span class="pill ${st==='Complete'?'ok':st==='In progress'?'warn':''}">${st}</span></td><td style="width:40%"><div class="gantt"><i class="${st==='Complete'?'done':st==='In progress'?'cur':''}" style="left:${i*100/n}%;width:${100/n}%"></i><span class="today" style="left:${Math.min(100,Math.max(0,(Date.now()-s)/span*100))}%"></span></div></td></tr>`}).join('');
+    return `<div class="card"><header><h2>Phase schedule</h2><span class="muted">${dmy(p.start)} – ${dmy(p.end)} · red line = today</span></header><div class="tw"><table><thead><tr><th>Phase</th><th>Start</th><th>End</th><th>% Complete</th><th>Status</th><th>Timeline</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  }
+  if(t==='Invoice Milestones')return msTable(db.ms.filter(m=>m.project==p.id),false,p.id);
+  if(t==='Risks')return riskTable(db.risks.filter(r=>r.project==p.id),false,p.id);
+  return auditTable(db.audit.filter(a=>a.project==p.id));
+}
+
+function msTable(list,showProj,pid){
+  const tot=list.reduce((s,m)=>s+m.amount,0);
+  return `<div class="card"><header><h2>Invoice milestones</h2><span class="count">${list.length}</span><span class="muted">Total ${money(tot)}</span>${pid?`<button class="btn sm" style="margin-left:auto" data-addms="${pid}">+ Add milestone</button>`:''}</header><div class="tw"><table><thead><tr>${showProj?'<th>Project</th>':''}<th>Milestone</th><th>Vendor</th><th class="num">Amount</th><th>Due Date</th><th>Status</th></tr></thead><tbody>
+  ${list.map(m=>`<tr>${showProj?`<td>${esc(proj(m.project).title)}</td>`:''}<td>${esc(m.name)}</td><td>${esc(m.vendor)}</td><td class="num">${money(m.amount)}</td><td>${dmy(m.due)}</td><td><select data-ms="${m.id}">${['Planned','Paid','Overdue'].map(s=>`<option ${s==m.status?'selected':''}>${s}</option>`).join('')}</select></td></tr>`).join('')||'<tr><td colspan="6" class="muted">None</td></tr>'}</tbody></table></div></div>`;
+}
+function riskTable(list,showProj,pid){
+  const L={Low:1,Medium:2,High:3};const score=r=>L[r.lik]*L[r.imp];
+  return `<div class="card"><header><h2>Risks</h2><span class="count">${list.length}</span>${pid?`<button class="btn sm" style="margin-left:auto" data-addrisk="${pid}">+ Add risk</button>`:''}</header><div class="tw"><table><thead><tr>${showProj?'<th>Project</th>':''}<th>Risk</th><th>Category</th><th>Likelihood</th><th>Impact</th><th>Rating</th><th>Owner</th><th>Mitigation</th><th>Status</th></tr></thead><tbody>
+  ${list.map(r=>{const s=score(r);return `<tr>${showProj?`<td>${esc(proj(r.project).title)}</td>`:''}<td>${esc(r.title)}</td><td>${esc(r.cat)}</td><td>${r.lik}</td><td>${r.imp}</td><td><span class="pill ${s>=6?'bad':s>=3?'warn':'ok'}">${s>=6?'High':s>=3?'Medium':'Low'}</span></td><td>${esc(r.owner)}</td><td>${esc(r.mit)}</td><td><select data-risk="${r.id}">${['Open','Mitigating','Escalated','Closed'].map(s=>`<option ${s==r.status?'selected':''}>${s}</option>`).join('')}</select></td></tr>`}).join('')||'<tr><td colspan="9" class="muted">None</td></tr>'}</tbody></table></div></div>`;
+}
+function auditTable(list){
+  return `<div class="card"><header><h2>Audit trail</h2><span class="count">${list.length}</span></header><div class="tw"><table><thead><tr><th>When</th><th>User</th><th>Change</th></tr></thead><tbody>${list.map(a=>`<tr><td>${new Date(a.when).toLocaleString('en-AU')}</td><td>${esc(a.who)}</td><td>${esc(a.what)}</td></tr>`).join('')||'<tr><td colspan="3" class="muted">No entries</td></tr>'}</tbody></table></div></div>`;
+}
+const risksView=()=>`<div class="pagehead"><h1>Risks</h1></div>${riskTable(db.risks,true)}`;
+const milestonesView=()=>`<div class="pagehead"><h1>Invoice Milestones</h1></div>${msTable(db.ms,true)}`;
+const auditView=()=>`<div class="pagehead"><h1>Audit Log</h1></div>${auditTable(db.audit.map(a=>({...a,what:(proj(a.project)?proj(a.project).title+': ':'')+a.what})))}`;
+
+// Sweep over allocation boundaries; returns periods where concurrent allocation exceeds 100%
+const nextDay=iso=>{const d=new Date(iso+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+1);return d.toISOString().slice(0,10)};
+const prevDay=iso=>{const d=new Date(iso+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-1);return d.toISOString().slice(0,10)};
+function overPeriods(allocs){
+  const pts=[...new Set(allocs.flatMap(a=>[a.start,nextDay(a.end)]))].sort();
+  const out=[];
+  for(let i=0;i<pts.length-1;i++){
+    const d=pts[i];const sum=allocs.filter(a=>a.start<=d&&d<=a.end).reduce((s,a)=>s+Number(a.pct),0);
+    if(sum>100)out.push({from:d,to:prevDay(pts[i+1]),sum});
+  }
+  return out;
+}
+function resourcesView(){
+  return `<div class="pagehead"><h1>Resources</h1><span class="muted">Allocation should total 100% for any period. Overlapping allocations above 100% show in red. Edit % or dates directly.</span></div>`+
+  db.resources.map(r=>{
+    const al=db.allocations.filter(a=>a.res==r.id).sort((a,b)=>a.start.localeCompare(b.start));
+    const over=overPeriods(al);
+    const cur=al.filter(a=>a.start<=TODAY&&TODAY<=a.end).reduce((s,a)=>s+Number(a.pct),0);
+    const isOver=a=>over.some(o=>a.start<=o.to&&a.end>=o.from);
+    return `<section class="card"><div class="rhead"><h2>${esc(r.name)}</h2><span class="meta">${esc(r.role)}</span><span class="tot ${cur>100?'over':''}">Current allocation today: ${cur}%</span></div>
+    ${over.length?`<div class="note">Over-allocated: ${over.map(o=>`${dmy(o.from)} – ${dmy(o.to)} (${o.sum}%)`).join('; ')}</div>`:''}
+    <div class="tw"><table><thead><tr><th>Project Title</th><th>Project Phase</th><th>Allocation Start Date</th><th>Allocation End Date</th><th class="num">Current Allocation</th><th></th></tr></thead><tbody>
+    ${al.map(a=>`<tr class="${isOver(a)?'over':''}"><td>${esc(proj(a.project)?.title)}</td><td><select data-al="${a.id}" data-k="phase">${PHASES.map(p=>`<option ${p==a.phase?'selected':''}>${p}</option>`).join('')}</select></td><td><input type="date" data-al="${a.id}" data-k="start" value="${a.start}"></td><td><input type="date" data-al="${a.id}" data-k="end" value="${a.end}"></td><td class="num"><input type="number" min="0" max="200" data-al="${a.id}" data-k="pct" value="${a.pct}"> %</td><td><button class="lnk" data-delal="${a.id}">Remove</button></td></tr>`).join('')||'<tr><td colspan="6" class="muted">No allocations</td></tr>'}</tbody></table></div></section>`}).join('');
+}
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,tr.row');if(!t)return;
+  if(t.dataset.nav){go({page:t.dataset.nav,pid:null,tab:'Details'});return}
+  if(t.dataset.tab){go({tab:t.dataset.tab});return}
+  if(t.dataset.open){go({page:'projects',pid:+t.dataset.open,tab:'Details'});return}
+  if(t.hasAttribute('data-newproj')){
+    const title=prompt('Project title?');if(!title)return;
+    const id=db.nextId.p++;db.projects.push({id,title,pm:'',fund:'IT CAPEX',sponsor:'',budget:0,actuals:0,phase:'ANALYSE',wbs:'',status:'Pipeline',start:TODAY,end:TODAY,desc:'',health:'Green',forecast:0});
+    log(id,'Project created');save();go({pid:id,tab:'Details'});return}
+  if(t.hasAttribute('data-savep')){
+    const p=proj(route.pid),ch=[];
+    document.querySelectorAll('[data-f]').forEach(el=>{const k=el.dataset.f;const v=el.type==='number'?Number(el.value):el.value;if(p[k]!==v){ch.push(`${k}: "${p[k]}" → "${v}"`);p[k]=v}});
+    if(ch.length){log(p.id,'Updated '+ch.join('; '));save();render()}return}
+  if(t.dataset.addalloc){
+    const name=prompt('Resource name (exact):\n'+db.resources.map(r=>r.name).join(', '));const r=db.resources.find(x=>x.name.toLowerCase()===(name||'').toLowerCase());if(!r)return;
+    const p=proj(t.dataset.addalloc);
+    db.allocations.push({id:db.nextId.a++,res:r.id,project:p.id,phase:p.phase,start:TODAY,end:p.end>TODAY?p.end:TODAY,pct:10});
+    log(p.id,`Allocated ${r.name} at 10%`);save();render();return}
+  if(t.dataset.delal){const a=db.allocations.find(x=>x.id==t.dataset.delal);if(!confirm('Remove this allocation?'))return;
+    db.allocations=db.allocations.filter(x=>x!==a);log(a.project,`Removed allocation of ${db.resources.find(r=>r.id==a.res).name}`);save();render();return}
+  if(t.dataset.addms){const name=prompt('Milestone name?');if(!name)return;const amt=Number(prompt('Amount ($)?','50000'))||0;
+    db.ms.push({id:db.nextId.m++,project:+t.dataset.addms,name,vendor:'TBC',amount:amt,due:TODAY,status:'Planned'});log(+t.dataset.addms,`Added milestone "${name}"`);save();render();return}
+  if(t.dataset.addrisk){const title=prompt('Risk description?');if(!title)return;
+    db.risks.push({id:db.nextId.r++,project:+t.dataset.addrisk,title,cat:'Delivery',lik:'Medium',imp:'Medium',owner:proj(t.dataset.addrisk).pm,mit:'TBD',status:'Open'});log(+t.dataset.addrisk,`Added risk "${title}"`);save();render();return}
+});
+document.addEventListener('dblclick',e=>{const r=e.target.closest('tr.row');if(r)go({page:'projects',pid:+r.dataset.open,tab:'Details'})});
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.dataset.al){const a=db.allocations.find(x=>x.id==el.dataset.al),k=el.dataset.k,old=a[k];
+    const v=k==='pct'?Math.max(0,Number(el.value)):el.value;if(!v&&k!=='pct'){render();return}
+    a[k]=v;
+    if(k!=='pct'&&k!=='phase'&&a.end<a.start){a[k]=old;alert('End date cannot be before start date.')}
+    else log(a.project,`${db.resources.find(r=>r.id==a.res).name} allocation ${k}: ${old} → ${a[k]}`);
+    save();render()}
+  else if(el.dataset.ms){const m=db.ms.find(x=>x.id==el.dataset.ms);log(m.project,`Milestone "${m.name}" status ${m.status} → ${el.value}`);m.status=el.value;save()}
+  else if(el.dataset.risk){const r=db.risks.find(x=>x.id==el.dataset.risk);log(r.project,`Risk "${r.title}" status ${r.status} → ${el.value}`);r.status=el.value;save()}
+});
+render();
+</script>
+</body>
+</html>
